@@ -6,8 +6,8 @@
 #pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
 
 #include <windows.h>
-#include <d3d11.h>
-#include <d3dcompiler.h>
+#include <d3d11.h>      // direct3D 11버전
+#include <d3dcompiler.h>    // 2시간13분쯤
 
  // 라이브러리 링크
 #pragma comment(lib, "d3d11.lib")
@@ -15,10 +15,10 @@
 #pragma comment(lib, "d3dcompiler.lib")
 
 // 전역 변수 (간결한 예제를 위해 사용)
-ID3D11Device * g_pd3dDevice = nullptr;                  //모든 리소스의 생성을 담당하는 핵심 객체임. 하드웨어(GPU)와의 통로 역할을 하며, 실질적으로 메모리를 할당하는 기능을 가짐.
+ID3D11Device* g_pd3dDevice = nullptr;                  //모든 리소스의 생성을 담당하는 핵심 객체임. 하드웨어(GPU)와의 통로(Stream) 역할을 하며, 실질적으로 메모리를 할당하는 기능을 가짐.
 ID3D11DeviceContext* g_pImmediateContext = nullptr;     //생성된 리소스를 사용하여 GPU에 그리기 명령(Rendering Commands)을 내리는 객체임. 파이프라인의 상태를 설정하고 실제로 "그려라(Draw)"라고 지시함.
 IDXGISwapChain* g_pSwapChain = nullptr;                 //그려진 그림을 모니터 화면으로 전달하고 관리하는 시스템임. 더블 버퍼링(Double Buffering) 기술의 실체라고 보면 됨.
-ID3D11RenderTargetView* g_pRenderTargetView = nullptr;  //GPU가 결과물을 써 내려갈 대상(Target)을 정의하는 '뷰(View)' 객체임. DX11에서는 리소스(Texture2D)를 직접 파이프라인에 꽂지 않음. 대신 그 리소스를 어떤 용도(렌더 타겟용, 셰이더 읽기용 등)로 쓸 것인지 정의하는 'View'를 통해 접근함.
+ID3D11RenderTargetView* g_pRenderTargetView = nullptr;  //GPU가 결과물을 써 내려갈 대상(Tar get)을 정의하는 '뷰(View)' 객체임. DX11에서는 리소스(Texture2D)를 직접 파이프라인에 꽂지 않음. 대신 그 리소스를 어떤 용도(렌더 타겟용, 셰이더 읽기용 등)로 쓸 것인지 정의하는 'View'를 통해 접근함.
 
 // 정점 구조체
 struct Vertex {
@@ -38,6 +38,8 @@ PS_INPUT VS(VS_INPUT input) {
 }
 float4 PS(PS_INPUT input) : SV_Target { return input.col; }
 )";
+// VS : Vertex Shader, PS : Pixel Shader
+
 
 /*
  * [이론 설명: 윈도우 프로시저 (WndProc)]
@@ -124,6 +126,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // [이론 설명: 메시지 루프]
     // GetMessage는 메시지가 올 때까지 대기(Wait)하지만, 
     // 게임은 메시지가 없어도 계속 그려야 하므로 PeekMessage를 사용하여 Non-blocking으로 처리함.
+    // 매 프레임 화면을 계속 갱신
+    // 특정 시점에만 갱신 -> PeekMessage를 커스텀하게 변경
     MSG msg = { 0 };
     while (WM_QUIT != msg.message) {
         if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
@@ -136,7 +140,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, clearColor);
 
             g_pImmediateContext->OMSetRenderTargets(1, &g_pRenderTargetView, nullptr);
-            D3D11_VIEWPORT vp = { 0, 0, 800, 600, 0.0f, 1.0f };
+            D3D11_VIEWPORT vp = { 0, 0, 800, 600, 0.0f, 1.0f }; // back buffer size
             g_pImmediateContext->RSSetViewports(1, &vp);
 
             g_pImmediateContext->IASetInputLayout(pInputLayout);
